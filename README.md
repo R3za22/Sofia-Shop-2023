@@ -1,28 +1,69 @@
-# Sofia Shop (2023)
+# Sofia Shop
 
-A small Persian-language (RTL) storefront for a cosmetics shop: product list with search, company and price filters, a product page and a cart stored in `localStorage`.
+Sofia Shop is a bilingual (English and Persian/FA, right-to-left) furniture and home-decor shop based in Ahvaz. Visitors can browse and filter products, manage a cart, go through checkout and review their orders. Payment is SIMULATED: no real payments are taken or processed.
 
-> **Course / early project.** Built in 2023 while learning JavaScript. The structure (store, filters, cart modules) follows a store-project exercise from a JavaScript course; the shop name, Persian copy and products are my own adaptation. It is not a real shop and has no checkout or backend.
+## Origin
 
-**Stack:** plain HTML, CSS and ES modules, no build step. Fonts: IRANSans (Persian), Kaushan Script. Icons: Font Awesome Free.
+This project began in 2023 as John Smilga's Comfy Store course project, written in vanilla JavaScript. It was rebuilt in 2026 with Vite, React and TypeScript, a typed API client and a new design.
 
-## Demo
+## Run modes
 
-`demo/build.sh` produces `dist-demo/` (static, relative paths, works under `/demos/sofia-shop/`) with a dismissible demo banner. It also skips the single request the original code made to a public course API, since the product data is already inline.
-
-```sh
-bash demo/build.sh   # then serve dist-demo/
+```bash
+npm install
+npm run dev
 ```
 
-## Images and licences
+**Mock mode (default).** Seeded products, cart and orders are kept in localStorage. No server is needed.
 
-The original version used watermarked stock images (Pngtree, kisspng) and unattributed product photos. All of them were removed. Every image in `images/` is now an SVG generated for this repo (abstract gradients and simple product glyphs), released under the repo's terms. No stock artwork is bundled.
+- Add `?fail=products,checkout` to the URL to make those operations error. Supported operations: `products`, `product`, `cart`, `checkout`, `orders`.
+- Test cards: `4242 4242 4242 4242` succeeds; `4000 0000 0000 0002` is declined.
+- Discount codes: `SOFIA10` (10% off) and `NOWRUZ` (fixed discount above a minimum subtotal).
 
-| Bundled asset | Source | Licence |
-|---|---|---|
-| `images/*.svg`, `images/ta/*.svg` | generated for this project | own work |
-| `vendor/fontawesome` (5.15.4) | fontawesome.com | Icons CC BY 4.0, fonts SIL OFL 1.1, code MIT (`vendor/fontawesome/LICENSE.txt`) |
-| `vendor/fonts/kaushan-script-*` | Fontsource / Google Fonts | SIL OFL 1.1 |
-| `fonts/IRANSansWeb(FaNum)` | IRANSans (Moein / Fanap) | free for non-commercial use; see the IRANSans licence |
+**Live mode.** Copy `.env.example` to `.env.local`, then set `VITE_API_MODE=live` and `VITE_API_BASE_URL` to your API origin. The live adapter calls these REST endpoints:
 
-Run locally: open `index.html` through any static server (modules need `http://`).
+| Method | Path |
+| --- | --- |
+| GET | `/products?room&types&colors&minPrice&maxPrice&inStock&q&sort&page&pageSize` |
+| GET | `/products/:id` |
+| GET | `/cart` |
+| POST | `/cart/lines` |
+| PATCH | `/cart/lines` |
+| DELETE | `/cart/lines` |
+| PUT | `/cart/delivery` |
+| PUT | `/cart/code` |
+| POST | `/checkout` |
+| GET | `/orders` |
+| GET | `/orders/:id` |
+| GET | `/account` |
+
+Errors are returned as JSON in the form `{code, message, fields}`.
+
+## Scripts
+
+| Script | Purpose |
+| --- | --- |
+| `dev` | Start the Vite development server |
+| `build` | Type-check, then build the production app into `dist/` |
+| `build:demo` | Type-check, then build the demo into `dist-demo/` |
+| `test` | Run unit tests with Vitest |
+| `e2e` | Run Playwright end-to-end tests (desktop and mobile) |
+| `lint` | Run ESLint on `src` and `e2e` |
+| `typecheck` | Run the TypeScript compiler without emitting files |
+
+## Structure
+
+- `src/api`: types, the mock adapter, the live REST adapter and localStorage storage.
+- `src/lib`: pure logic (cart, pricing, validation, catalogue), with unit tests.
+- `src/mock`: seeded fixtures for the mock adapter.
+- `src/i18n`: English and Persian copy and the direction switch.
+- `src/pages`: route pages.
+
+## Demo build
+
+`npm run build:demo` writes `dist-demo/`. The demo is served from the base path `/demos/sofia-shop/`, uses hash routing, shows a demo banner and makes no external requests.
+
+## Assets and licences
+
+- Every product picture is an original SVG drawn in `src/components/Illustration.tsx`. No stock photos are used.
+- Fonts are Bricolage Grotesque, Figtree and Vazirmatn, all licensed under the SIL Open Font License 1.1 (OFL 1.1), and bundled via `@fontsource`.
+- The Persian copy was machine-drafted and needs review by a native speaker.
