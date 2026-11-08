@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useCart } from '../cartContext';
+import { useUser } from '../userContext';
+import { SignIn } from './SignIn';
 import { Illustration } from '../components/Illustration';
 import { EmptyState, ErrorState, PageSkeleton } from '../components/States';
 import { useAsync } from '../hooks';
@@ -21,7 +23,7 @@ function OrderRow({ o }: { o: Order }) {
       <div className="order__main">
         <div className="order__arts">
           {o.lines.slice(0, 3).map((l) => (
-            <div key={l.productId + l.color} className="mini__art" style={{ background: l.bg }}><Illustration kind={l.kind} c={COLOR_HEX[l.color]} d={l.accent} /></div>
+            <div key={l.productId + l.color + (l.size?.en ?? '')} className="mini__art" style={{ background: l.bg }}><Illustration kind={l.kind} c={COLOR_HEX[l.color]} d={l.accent} /></div>
           ))}
         </div>
         <div className="order__info">
@@ -37,9 +39,9 @@ function OrderRow({ o }: { o: Order }) {
         <div className="order__more">
           <ul className="mini">
             {o.lines.map((l) => (
-              <li key={l.productId + l.color}>
+              <li key={l.productId + l.color + (l.size?.en ?? '')}>
                 <div className="mini__art" style={{ background: l.bg }}><Illustration kind={l.kind} c={COLOR_HEX[l.color]} d={l.accent} /></div>
-                <div><div className="line__name">{l.name[lang]}</div><span className="muted small">{t(`color.${l.color}`)} · {t('co.qty', { n: num(l.qty) })}</span></div>
+                <div><div className="line__name">{l.name[lang]}</div><span className="muted small">{t(`color.${l.color}`)}{l.size ? ` · ${l.size[lang]}` : ''} · {t('co.qty', { n: num(l.qty) })}</span></div>
                 <span>{money(l.unit * l.qty)}</span>
               </li>
             ))}
@@ -53,17 +55,20 @@ function OrderRow({ o }: { o: Order }) {
 }
 
 export function Account() {
-  const { t, digits } = useI18n();
+  const { t, lang, digits } = useI18n();
+  const user = useUser();
   const [sp, setSp] = useSearchParams();
   const tab: Tab = TABS.find((x) => x === sp.get('tab')) ?? 'orders';
   const { refresh } = useCart();
-  const orders = useAsync(() => api.listOrders(), 'orders');
-  const account = useAsync(() => api.getAccount(), 'account');
+  const signedIn = !!user.account;
+  const orders = useAsync(() => (signedIn ? api.listOrders() : Promise.resolve([] as Order[])), `orders-${signedIn}`);
+  const account = useAsync(() => (signedIn ? api.getAccount() : Promise.resolve(null)), `account-${signedIn}`);
   const [done, setDone] = useState(false);
 
   async function reset() {
     await api.resetDemo();
     await refresh();
+    await user.reload();
     orders.reload();
     setDone(true);
   }
@@ -75,10 +80,13 @@ export function Account() {
     }
   }
 
+  if (user.loading) return <div className="wrap page"><PageSkeleton /></div>;
+  if (!user.account) return <SignIn notice />;
+
   return (
     <div className="wrap page">
       <h1>{t('ac.title')}</h1>
-      {account.status === 'ready' && <p className="muted">{account.data.name} · {account.data.email}</p>}
+      {account.status === 'ready' && account.data && <p className="muted">{account.data.name[lang]} · {account.data.email}</p>}
       <div className="account-layout">
         <div className="tabs" role="tablist" aria-label={t('ac.title')}>
           {TABS.map((x) => (
@@ -106,9 +114,9 @@ export function Account() {
           {tab === 'details' && (
             <>
               <h2>{t('ac.tab.details')}</h2>
-              {account.status === 'ready' && (
+              {account.status === 'ready' && account.data && (
                 <dl className="facts panel">
-                  <div><dt>{t('ac.field.name')}</dt><dd>{account.data.name}</dd></div>
+                  <div><dt>{t('ac.field.name')}</dt><dd>{account.data.name[lang]}</dd></div>
                   <div><dt>{t('ac.field.email')}</dt><dd dir="ltr">{account.data.email}</dd></div>
                   <div><dt>{t('ac.field.phone')}</dt><dd dir="ltr">{digits(account.data.phone)}</dd></div>
                 </dl>

@@ -1,7 +1,7 @@
 import type { ListParams } from '../types';
 import { ApiError, type ApiErrorCode, type ShopApi } from './types';
 
-const CODES: ApiErrorCode[] = ['not_found', 'validation', 'invalid_code', 'payment_declined', 'out_of_stock', 'empty_cart'];
+const CODES: ApiErrorCode[] = ['not_found', 'validation', 'invalid_code', 'payment_declined', 'out_of_stock', 'empty_cart', 'unauthorized'];
 
 function query(p: ListParams): string {
   const qs = new URLSearchParams();
@@ -35,7 +35,7 @@ export function createLiveApi(baseUrl: string, fetchImpl: typeof fetch = (...a) 
     } catch {
       throw new ApiError('network');
     }
-    if (res.ok) return (await res.json()) as T;
+    if (res.ok) return (res.status === 204 ? undefined : await res.json()) as T;
     let data: { code?: string; message?: string; fields?: ApiError['fields'] } = {};
     try {
       data = await res.json();
@@ -46,20 +46,26 @@ export function createLiveApi(baseUrl: string, fetchImpl: typeof fetch = (...a) 
     throw new ApiError(code, data.message, data.fields);
   }
 
-  const lineBody = (productId: string, color: string, qty?: number) => ({ productId, color, qty });
+  const lineBody = (productId: string, color: string, qty?: number, size?: string) => ({ productId, color, size, qty });
   return {
     listProducts: (p) => call('GET', `/products${query(p)}`),
     getProduct: (id) => call('GET', `/products/${encodeURIComponent(id)}`),
     getCart: () => call('GET', '/cart'),
-    addToCart: (id, color, qty) => call('POST', '/cart/lines', lineBody(id, color, qty)),
-    setQty: (id, color, qty) => call('PATCH', '/cart/lines', lineBody(id, color, qty)),
-    removeLine: (id, color) => call('DELETE', '/cart/lines', lineBody(id, color)),
+    addToCart: (id, color, qty, size) => call('POST', '/cart/lines', lineBody(id, color, qty, size)),
+    setQty: (id, color, qty, size) => call('PATCH', '/cart/lines', lineBody(id, color, qty, size)),
+    removeLine: (id, color, size) => call('DELETE', '/cart/lines', lineBody(id, color, undefined, size)),
     setDelivery: (o) => call('PUT', '/cart/delivery', o),
     applyCode: (code) => call('PUT', '/cart/code', { code }),
     checkout: (input) => call('POST', '/checkout', input),
     listOrders: () => call('GET', '/orders'),
     getOrder: (id) => call('GET', `/orders/${encodeURIComponent(id)}`),
     getAccount: () => call('GET', '/account'),
+    signIn: (email, password) => call('POST', '/session', { email, password }),
+    signOut: () => call('DELETE', '/session'),
+    getWishlist: () => call('GET', '/wishlist'),
+    toggleWishlist: (id) => call('POST', `/wishlist/${encodeURIComponent(id)}/toggle`),
+    listWishlist: () => call('GET', '/wishlist/products'),
+    sendContact: (input) => call('POST', '/contact', input),
     resetDemo: async () => undefined,
   };
 }

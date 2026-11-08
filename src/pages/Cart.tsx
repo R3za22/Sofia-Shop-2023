@@ -60,22 +60,22 @@ export function Cart() {
           {cart.lines.map((l) => {
             const name = l.product.name[lang];
             return (
-              <li key={`${l.product.id}-${l.color}`} className="line" data-testid="cart-line">
+              <li key={`${l.product.id}-${l.color}-${l.size?.id ?? ''}`} className="line" data-testid="cart-line">
                 <div className="line__art" style={{ background: l.product.bg }}>
                   <Illustration kind={l.product.kind} c={COLOR_HEX[l.color]} d={l.product.accent} />
                 </div>
                 <div className="line__info">
                   <Link to={`/product/${l.product.id}`} className="line__name">{name}</Link>
-                  <span className="muted">{t(`color.${l.color}`)}</span>
-                  <span className="muted">{t('cart.each', { p: money(l.product.price) })}</span>
-                  <button className="link-btn" aria-label={t('cart.removeLabel', { n: name })} onClick={() => act(() => remove(l.product.id, l.color))}>
+                  <span className="muted">{t(`color.${l.color}`)}{l.size ? ` · ${l.size.label[lang]}` : ''}</span>
+                  <span className="muted">{t('cart.each', { p: money(l.unit) })}</span>
+                  <button className="link-btn" aria-label={t('cart.removeLabel', { n: name })} onClick={() => act(() => remove(l.product.id, l.color, l.size?.id))}>
                     {t('cart.remove')}
                   </button>
                 </div>
                 <div className="qty" role="group" aria-label={name}>
-                  <button aria-label={t('pd.dec')} onClick={() => act(() => setQty(l.product.id, l.color, l.qty - 1))}>−</button>
+                  <button aria-label={t('pd.dec')} onClick={() => act(() => setQty(l.product.id, l.color, l.qty - 1, l.size?.id))}>−</button>
                   <output>{num(l.qty)}</output>
-                  <button aria-label={t('pd.inc')} onClick={() => act(() => setQty(l.product.id, l.color, l.qty + 1))}>+</button>
+                  <button aria-label={t('pd.inc')} onClick={() => act(() => setQty(l.product.id, l.color, l.qty + 1, l.size?.id))}>+</button>
                 </div>
                 <div className="line__total">{money(l.lineTotal)}</div>
               </li>

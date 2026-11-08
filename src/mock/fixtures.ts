@@ -1,4 +1,4 @@
-import type { Account, ColorId, Kind, L10n, Product, ProductType, Room } from '../types';
+import type { Account, ColorId, Kind, L10n, Product, ProductSize, ProductType, Room } from '../types';
 
 export const COLOR_HEX: Record<ColorId, string> = {
   indigo: '#23407A',
@@ -77,9 +77,9 @@ export const TYPE_SPECS: Record<ProductType, { k: L10n; v: L10n }[]> = {
 type Row = [string, string, string, ProductType, Room, number, ColorId[], number, boolean, string, string];
 const GLAZE = '#C9D3E8', SAND = '#F1D9A6', MINT = '#DCE8DA', CLAY = '#E4D3C6';
 const ROWS: Row[] = [
-  ['alma-sofa', 'Alma 3-seat sofa', 'مبل سه‌نفره آلما', 'sofas', 'living', 38_900_000, ['indigo', 'sage', 'oat'], 6, true, GLAZE, '#E3A53B'],
-  ['rayan-sofa', 'Rayan 2-seat sofa', 'مبل دونفره رایان', 'sofas', 'living', 27_600_000, ['sage', 'oat'], 0, false, MINT, SAND],
-  ['tala-sofa', 'Tala 3-seat sofa', 'مبل سه‌نفره طلا', 'sofas', 'living', 33_200_000, ['charcoal', 'oat'], 4, false, CLAY, '#E3A53B'],
+  ['alma-sofa', 'Alma sofa', 'مبل آلما', 'sofas', 'living', 38_900_000, ['indigo', 'sage', 'oat'], 6, true, GLAZE, '#E3A53B'],
+  ['rayan-sofa', 'Rayan sofa', 'مبل رایان', 'sofas', 'living', 27_600_000, ['sage', 'oat'], 0, false, MINT, SAND],
+  ['tala-sofa', 'Tala sofa', 'مبل طلا', 'sofas', 'living', 33_200_000, ['charcoal', 'oat'], 4, false, CLAY, '#E3A53B'],
   ['nila-armchair', 'Nila armchair', 'مبل تک‌نفره نیلا', 'armchairs', 'living', 14_500_000, ['indigo', 'saffron', 'oat'], 9, false, SAND, '#EEF1F0'],
   ['sahar-chair', 'Sahar reading chair', 'صندلی مطالعه سحر', 'armchairs', 'living', 11_900_000, ['sage', 'charcoal'], 5, false, MINT, '#E3A53B'],
   ['omid-chair', 'Omid lounge chair', 'مبل راحتی امید', 'armchairs', 'living', 16_800_000, ['indigo', 'oat'], 3, true, GLAZE, SAND],
@@ -103,6 +103,16 @@ const ROWS: Row[] = [
   ['behin-shelf', 'Behin wall shelf', 'طاقچه دیواری بهین', 'shelving', 'bedroom', 2_200_000, ['oat', 'sage'], 18, false, MINT, '#E3A53B'],
 ];
 
+/** [id, en, fa, price multiplier]. The first entry is the default size and carries the product's base price. */
+const SIZE_SETS: Partial<Record<ProductType, [string, string, string, number][]>> = {
+  sofas: [['three', '3-seat', 'سه‌نفره', 1], ['two', '2-seat', 'دونفره', 0.77], ['four', '4-seat', 'چهارنفره', 1.26]],
+  'dining-tables': [['six', 'Seats 6', 'شش نفره', 1], ['four', 'Seats 4', 'چهار نفره', 0.8], ['eight', 'Seats 8', 'هشت نفره', 1.3]],
+};
+const round100k = (n: number) => Math.round(n / 100_000) * 100_000;
+function sizesFor(type: ProductType, price: number): ProductSize[] | undefined {
+  return SIZE_SETS[type]?.map(([id, en, fa, m]) => ({ id, label: { en, fa }, price: m === 1 ? price : round100k(price * m) }));
+}
+
 export const PRODUCTS: Product[] = ROWS.map(([id, en, fa, type, room, price, colors, stock, isNew, bg, accent], i) => ({
   id,
   name: { en, fa },
@@ -110,6 +120,7 @@ export const PRODUCTS: Product[] = ROWS.map(([id, en, fa, type, room, price, col
   type,
   kind: TYPE_ROOM_KIND[type],
   price,
+  sizes: sizesFor(type, price),
   colors,
   stock,
   isNew,
@@ -119,4 +130,4 @@ export const PRODUCTS: Product[] = ROWS.map(([id, en, fa, type, room, price, col
   accent,
 }));
 
-export const ACCOUNT: Account = { name: 'Sara Karimi', email: 'sara@example.com', phone: '09121234567' };
+export const ACCOUNT: Account = { name: { en: 'Sara Karimi', fa: 'سارا کریمی' }, email: 'sara@example.com', phone: '09121234567' };

@@ -1,10 +1,10 @@
 import { ACCOUNT, PRODUCTS } from '../mock/fixtures';
 import { addLine, removeLine, setLineQty } from '../lib/cart';
 import { listProducts } from '../lib/catalog';
-import { digitsOnly, validateCheckout } from '../lib/validate';
-import { discountFor, quote } from '../lib/pricing';
+import { digitsOnly, validateCheckout, validateContact, validEmail } from '../lib/validate';
+import { discountFor, quote, unitPrice } from '../lib/pricing';
 import type {
-  CartLine, CartView, City, DeliveryMethod, Order, OrderLine, Product,
+  Account, CartLine, CartView, City, DeliveryMethod, Order, OrderLine, Product,
 } from '../types';
 import { ApiError, type ShopApi } from './types';
 import { createStorage, type Storage } from './storage';
@@ -14,6 +14,8 @@ const EMPTY_CART: CartState = { lines: [], city: 'ahvaz', method: 'home', code: 
 
 /** Test cards for the simulated gateway. Any other Luhn-valid card succeeds. */
 export const DECLINE_CARD = '4000000000000002';
+/** Sign-in with this password is refused, to demo the error state. */
+export const WRONG_PASSWORD = 'wrong-password';
 
 export interface MockOptions {
   storage?: Storage;
@@ -57,7 +59,9 @@ export function createMockApi(opts: MockOptions = {}): ShopApi {
       const stock = withStock(product).stock;
       if (stock <= 0) return [];
       const qty = Math.min(l.qty, stock);
-      return [{ product: withStock(product), color: l.color, qty, lineTotal: product.price * qty }];
+      const size = product.sizes?.find((s) => s.id === l.size);
+      const unit = unitPrice(product, l.size);
+      return [{ product: withStock(product), color: l.color, size, qty, unit, lineTotal: unit * qty }];
     });
     return {
       lines,
@@ -65,7 +69,7 @@ export function createMockApi(opts: MockOptions = {}): ShopApi {
       city: c.city,
       method: c.method,
       code: c.code,
-      quote: quote(lines.map((l) => ({ price: l.product.price, qty: l.qty })), c.city, c.method, c.code),
+      quote: quote(lines.map((l) => ({ price: l.unit, qty: l.qty })), c.city, c.method, c.code),
     };
   }
 
@@ -78,7 +82,7 @@ export function createMockApi(opts: MockOptions = {}): ShopApi {
       return {
         id, createdAt: now() - daysAgo * DAY, status, lines: [line],
         quote: quote([{ price: p.price, qty }], 'ahvaz', 'home'),
-        customer: { name: ACCOUNT.name, phone: ACCOUNT.phone },
+        customer: { name: ACCOUNT.name.en, phone: ACCOUNT.phone },
         delivery: { method: 'home', city: 'ahvaz', postal: '6135712345', address: 'Kianpars, Street 5, No. 12' },
         payment: { method: 'simulated', last4: '4242' },
       };
@@ -92,6 +96,13 @@ export function createMockApi(opts: MockOptions = {}): ShopApi {
     storage.set('sofia.orders', seeded);
     return seeded;
   };
+
+  const requireSession = (): Account => {
+    const s = storage.get<Account | null>('sofia.session', ACCOUNT);
+    if (!s) throw new ApiError('unauthorized');
+    return s;
+  };
+  const readWishlist = () => storage.get<string[]>('sofia.wishlist', []);
 
   async function mutateCart(fn: (c: CartState) => CartState): Promise<CartView> {
     await wait();
@@ -117,15 +128,17 @@ export function createMockApi(opts: MockOptions = {}): ShopApi {
       maybeFail('cart');
       return view(readCart());
     },
-    addToCart: (productId, color, qty) =>
+    addToCart: (productId, color, qty, size) =>
       mutateCart((c) => {
         const p = find(productId);
         if (!p.colors.includes(color)) throw new ApiError('validation', 'Unknown colour');
+        if (p.sizes && size !== undefined && !p.sizes.some((s) => s.id === size)) throw new ApiError('validation', 'Unknown size');
         if (p.stock <= 0) throw new ApiError('out_of_stock');
-        return { ...c, lines: addLine(c.lines, productId, color, qty, p.stock) };
+        const sz = p.sizes ? (size ?? p.sizes[0].id) : undefined;
+        return { ...c, lines: addLine(c.lines, productId, color, qty, p.stock, sz) };
       }),
-    setQty: (productId, color, qty) => mutateCart((c) => ({ ...c, lines: setLineQty(c.lines, productId, color, qty, find(productId).stock) })),
-    removeLine: (productId, color) => mutateCart((c) => ({ ...c, lines: removeLine(c.lines, productId, color) })),
+    setQty: (productId, color, qty, size) => mutateCart((c) => ({ ...c, lines: setLineQty(c.lines, productId, color, qty, find(productId).stock, size) })),
+    removeLine: (productId, color, size) => mutateCart((c) => ({ ...c, lines: removeLine(c.lines, productId, color, size) })),
     setDelivery: (o) => mutateCart((c) => ({ ...c, city: o.city ?? c.city, method: o.method ?? c.method })),
     applyCode: (code) =>
       mutateCart((c) => {
@@ -145,7 +158,7 @@ export function createMockApi(opts: MockOptions = {}): ShopApi {
       if (digitsOnly(input.card.number) === DECLINE_CARD) throw new ApiError('payment_declined');
 
       const q = quote(
-        cart.lines.map((l) => ({ price: l.product.price, qty: l.qty })),
+        cart.lines.map((l) => ({ price: l.unit, qty: l.qty })),
         input.city, input.method, cart.code,
       );
       const orders = readOrders();
@@ -155,8 +168,8 @@ export function createMockApi(opts: MockOptions = {}): ShopApi {
         createdAt: now(),
         status: 'processing',
         lines: cart.lines.map((l) => ({
-          productId: l.product.id, name: l.product.name, kind: l.product.kind, color: l.color,
-          bg: l.product.bg, accent: l.product.accent, qty: l.qty, unit: l.product.price,
+          productId: l.product.id, name: l.product.name, kind: l.product.kind, color: l.color, size: l.size?.label,
+          bg: l.product.bg, accent: l.product.accent, qty: l.qty, unit: l.unit,
         })),
         quote: q,
         customer: { name: input.name.trim(), phone: digitsOnly(input.phone) },
@@ -174,6 +187,7 @@ export function createMockApi(opts: MockOptions = {}): ShopApi {
     async listOrders() {
       await wait();
       maybeFail('orders');
+      requireSession();
       return [...readOrders()].sort((a, b) => b.createdAt - a.createdAt);
     },
     async getOrder(id) {
@@ -185,10 +199,54 @@ export function createMockApi(opts: MockOptions = {}): ShopApi {
     },
     async getAccount() {
       await wait();
-      return ACCOUNT;
+      return requireSession();
+    },
+    async signIn(email, password) {
+      await wait();
+      const fields: Record<string, string> = {};
+      if (!email.trim()) fields.email = 'required';
+      else if (!validEmail(email)) fields.email = 'email';
+      if (!password) fields.password = 'required';
+      else if (password.length < 6) fields.password = 'password';
+      if (Object.keys(fields).length) throw new ApiError('validation', 'Invalid sign-in details', fields);
+      if (password === WRONG_PASSWORD) throw new ApiError('unauthorized');
+      const account = { ...ACCOUNT, email: email.trim() };
+      storage.set('sofia.session', account);
+      return account;
+    },
+    async signOut() {
+      await wait();
+      storage.set('sofia.session', null);
+    },
+    async getWishlist() {
+      await wait();
+      return readWishlist();
+    },
+    async toggleWishlist(productId) {
+      await wait();
+      find(productId);
+      const cur = readWishlist();
+      const next = cur.includes(productId) ? cur.filter((x) => x !== productId) : [...cur, productId];
+      storage.set('sofia.wishlist', next);
+      return next;
+    },
+    async listWishlist() {
+      await wait();
+      const ids = readWishlist();
+      return catalog().filter((p) => ids.includes(p.id));
+    },
+    async sendContact(input) {
+      await wait();
+      maybeFail('contact');
+      const errors = validateContact(input);
+      if (Object.keys(errors).length) throw new ApiError('validation', 'Invalid message', errors);
+      const messages = storage.get<{ id: string }[]>('sofia.messages', []);
+      const receipt = { id: `MSG-${1001 + messages.length}`, createdAt: now() };
+      storage.set('sofia.messages', [...messages, { ...receipt, ...input }]);
+      return receipt;
     },
     async resetDemo() {
-      for (const k of ['sofia.cart', 'sofia.orders', 'sofia.stock']) storage.remove(k);
+      for (const k of ['sofia.cart', 'sofia.orders', 'sofia.stock', 'sofia.session', 'sofia.wishlist', 'sofia.messages']) storage.remove(k);
     },
   };
 }

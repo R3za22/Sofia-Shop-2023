@@ -8,9 +8,9 @@ interface CartCtx {
   loading: boolean;
   failed: boolean;
   refresh(): Promise<void>;
-  add(productId: string, color: ColorId, qty: number): Promise<void>;
-  setQty(productId: string, color: ColorId, qty: number): Promise<void>;
-  remove(productId: string, color: ColorId): Promise<void>;
+  add(productId: string, color: ColorId, qty: number, size?: string): Promise<void>;
+  setQty(productId: string, color: ColorId, qty: number, size?: string): Promise<void>;
+  remove(productId: string, color: ColorId, size?: string): Promise<void>;
   setDelivery(o: { city?: City; method?: DeliveryMethod }): Promise<void>;
   applyCode(code: string): Promise<void>;
 }
@@ -41,9 +41,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const run = (p: Promise<CartView>) => p.then(setCart);
     return {
       cart, loading, failed, refresh,
-      add: (id, color, qty) => run(api.addToCart(id, color, qty)),
-      setQty: (id, color, qty) => run(api.setQty(id, color, qty)),
-      remove: (id, color) => run(api.removeLine(id, color)),
+      add: (id, color, qty, size) => run(api.addToCart(id, color, qty, size)),
+      setQty: (id, color, qty, size) => run(api.setQty(id, color, qty, size)),
+      remove: (id, color, size) => run(api.removeLine(id, color, size)),
       setDelivery: (o) => run(api.setDelivery(o)),
       applyCode: (code) => run(api.applyCode(code)),
     };

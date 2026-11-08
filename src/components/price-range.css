@@ -1,0 +1,120 @@
+/* Dual-thumb price slider. Logical properties only so it mirrors under dir="rtl". */
+
+.price-range {
+  --pr-thumb: 44px;
+  --pr-track: #CBD3D6;
+  --pr-fill: #23407A;
+  --pr-thumb-bg: #FFFFFF;
+  --pr-focus: #16263A;
+
+  display: grid;
+  gap: 8px;
+  inline-size: 100%;
+}
+
+.price-range__slider {
+  position: relative;
+  block-size: var(--pr-thumb);
+  inline-size: 100%;
+}
+
+.price-range__track,
+.price-range__fill {
+  position: absolute;
+  inset-block-start: 50%;
+  block-size: 4px;
+  margin-block-start: -2px;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.price-range__track {
+  inset-inline: calc(var(--pr-thumb) / 2);
+  background: var(--pr-track);
+}
+
+.price-range__fill {
+  background: var(--pr-fill);
+}
+
+/* Both native inputs sit on top of each other; only the thumbs receive pointer events. */
+.price-range__input {
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-start: 0;
+  inline-size: 100%;
+  block-size: var(--pr-thumb);
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  pointer-events: none;
+  touch-action: none;
+  outline: none;
+}
+
+.price-range__input::-webkit-slider-runnable-track {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  block-size: var(--pr-thumb);
+}
+
+.price-range__input::-moz-range-track {
+  background: transparent;
+  border: 0;
+  block-size: var(--pr-thumb);
+}
+
+.price-range__input::-moz-range-progress {
+  background: transparent;
+}
+
+.price-range__input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  box-sizing: border-box;
+  inline-size: var(--pr-thumb);
+  block-size: var(--pr-thumb);
+  border-radius: 50%;
+  border: 2px solid var(--pr-fill);
+  background: var(--pr-thumb-bg);
+  cursor: grab;
+}
+
+.price-range__input::-moz-range-thumb {
+  box-sizing: border-box;
+  pointer-events: auto;
+  inline-size: var(--pr-thumb);
+  block-size: var(--pr-thumb);
+  border-radius: 50%;
+  border: 2px solid var(--pr-fill);
+  background: var(--pr-thumb-bg);
+  cursor: grab;
+}
+
+.price-range__input:active::-webkit-slider-thumb {
+  cursor: grabbing;
+}
+
+.price-range__input:active::-moz-range-thumb {
+  cursor: grabbing;
+}
+
+.price-range__input:focus-visible::-webkit-slider-thumb {
+  outline: 3px solid var(--pr-focus);
+  outline-offset: 2px;
+}
+
+.price-range__input:focus-visible::-moz-range-thumb {
+  outline: 3px solid var(--pr-focus);
+  outline-offset: 2px;
+}
+
+.price-range__readout {
+  margin: 0;
+  font-size: 0.95rem;
+}

@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { EmptyState, ErrorState, GridSkeleton } from '../components/States';
+import { PriceRange } from '../components/PriceRange';
 import { ProductCard } from '../components/ProductCard';
 import { useAsync } from '../hooks';
 import { useI18n } from '../i18n';
-import { digitsOnly } from '../lib/validate';
 import { COLOR_HEX } from '../mock/fixtures';
 import type { ColorId, ListParams, ProductType, Room, SortKey } from '../types';
 
@@ -41,13 +41,6 @@ export function Products() {
   const params = parse(sp);
   const res = useAsync(() => api.listProducts(params), sp.toString());
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [minText, setMinText] = useState(sp.get('min') ?? '');
-  const [maxText, setMaxText] = useState(sp.get('max') ?? '');
-
-  useEffect(() => {
-    setMinText(sp.get('min') ?? '');
-    setMaxText(sp.get('max') ?? '');
-  }, [sp]);
 
   /** Update URL params; changing any filter returns to page 1. */
   const update = (changes: Record<string, string | null>, keepPage = false) => {
@@ -63,10 +56,6 @@ export function Products() {
     const cur = (sp.get(key) ?? '').split(',').filter(Boolean);
     const next = cur.includes(value) ? cur.filter((x) => x !== value) : [...cur, value];
     update({ [key]: next.join(',') });
-  };
-  const commitPrice = () => {
-    const clean = (s: string) => digitsOnly(s) || null;
-    update({ min: clean(minText), max: clean(maxText) });
   };
 
   const chips: { label: string; clear: () => void }[] = [
@@ -129,11 +118,7 @@ export function Products() {
           </fieldset>
           <fieldset>
             <legend>{t('list.price')}</legend>
-            <div className="price-row">
-              <input aria-label={t('list.min')} inputMode="numeric" placeholder={data ? num(data.priceRange.min) : ''} value={minText} onChange={(e) => setMinText(e.target.value)} onBlur={commitPrice} onKeyDown={(e) => e.key === 'Enter' && commitPrice()} />
-              <span aria-hidden="true">–</span>
-              <input aria-label={t('list.max')} inputMode="numeric" placeholder={data ? num(data.priceRange.max) : ''} value={maxText} onChange={(e) => setMaxText(e.target.value)} onBlur={commitPrice} onKeyDown={(e) => e.key === 'Enter' && commitPrice()} />
-            </div>
+            {data && <PriceRange bounds={{ min: Math.floor(data.priceRange.min / 100_000) * 100_000, max: Math.ceil(data.priceRange.max / 100_000) * 100_000 }} min={params.minPrice} max={params.maxPrice} onCommit={(lo, hi) => update({ min: lo === undefined ? null : String(lo), max: hi === undefined ? null : String(hi) })} />}
           </fieldset>
           <fieldset>
             <legend>{t('list.color')}</legend>

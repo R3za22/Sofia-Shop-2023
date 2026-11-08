@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { ApiError } from '../api/types';
 import { useCart } from '../cartContext';
+import { HeartButton } from '../components/HeartButton';
 import { Illustration } from '../components/Illustration';
 import { ProductCard } from '../components/ProductCard';
 import { ErrorState, PageSkeleton } from '../components/States';
@@ -24,12 +25,14 @@ export function Product() {
   }, `rel-${id}`);
 
   const [color, setColor] = useState<ColorId | null>(null);
+  const [sizeId, setSizeId] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     setColor(null);
+    setSizeId(null);
     setQty(1);
     setMsg(null);
   }, [id]);
@@ -39,6 +42,8 @@ export function Product() {
 
   const p = res.data;
   const chosen = color ?? p.colors[0];
+  const size = p.sizes?.find((s) => s.id === sizeId) ?? p.sizes?.[0];
+  const price = size?.price ?? p.price;
   const soldOut = p.stock <= 0;
   const maxQty = Math.min(p.stock, MAX_QTY);
 
@@ -46,7 +51,7 @@ export function Product() {
     setBusy(true);
     setMsg(null);
     try {
-      await add(p.id, chosen, qty);
+      await add(p.id, chosen, qty, size?.id);
       setMsg({ kind: 'ok', text: t('pd.added') });
     } catch (e) {
       setMsg({ kind: 'err', text: e instanceof ApiError && e.code === 'out_of_stock' ? t('pd.soldout') : t('err.d') });
@@ -73,8 +78,22 @@ export function Product() {
             {soldOut ? t('badge.out') : p.stock <= 3 ? t('badge.low', { n: num(p.stock) }) : t('badge.in')}
           </span>
           <h1>{p.name[lang]}</h1>
-          <p className="price">{money(p.price)}</p>
+          <p className="price" data-testid="pdp-price">{money(price)}</p>
           <p>{p.description[lang]}</p>
+
+          {p.sizes && size && (
+            <fieldset className="options">
+              <legend>{t('pd.sizeSel', { s: size.label[lang] })}</legend>
+              <div className="sizes">
+                {p.sizes.map((s) => (
+                  <button key={s.id} type="button" className="size" aria-pressed={s.id === size.id} onClick={() => setSizeId(s.id)}>
+                    <span>{s.label[lang]}</span>
+                    <small>{money(s.price)}</small>
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          )}
 
           <fieldset className="options">
             <legend>{t('pd.colour', { c: t(`color.${chosen}`) })}</legend>
@@ -95,15 +114,18 @@ export function Product() {
               </div>
             </div>
           )}
-          <button className="btn btn--lg" disabled={soldOut || busy} onClick={onAdd}>
-            {soldOut ? t('pd.soldout') : t('pd.add')}
-          </button>
+          <div className="buy-row">
+            <button className="btn btn--lg" disabled={soldOut || busy} onClick={onAdd}>
+              {soldOut ? t('pd.soldout') : t('pd.add')}
+            </button>
+            <HeartButton product={p} className="heart--pdp" />
+          </div>
           <div aria-live="polite" className={msg?.kind === 'err' ? 'msg msg--err' : 'msg'}>
             {msg && <>{msg.text} {msg.kind === 'ok' && <Link to="/cart">{t('pd.viewCart')}</Link>}</>}
           </div>
           <ul className="notes">
-            <li>{t('pd.delivery')}</li>
-            <li>{t('pd.returns')}</li>
+            <li>{t('pd.delivery')} <Link to="/info/delivery">{t('footer.delivery')}</Link></li>
+            <li>{t('pd.returns')} <Link to="/info/returns">{t('footer.returns')}</Link></li>
           </ul>
         </div>
       </div>
@@ -117,7 +139,7 @@ export function Product() {
             ))}
           </dl>
           <h2>{t('pd.care')}</h2>
-          <p>{t('pd.careText')}</p>
+          <p>{t('pd.careText')} <Link to="/info/care">{t('footer.care')}</Link> · <Link to="/contact">{t('footer.contact')}</Link></p>
         </section>
         {related.status === 'ready' && related.data.length > 0 && (
           <section>

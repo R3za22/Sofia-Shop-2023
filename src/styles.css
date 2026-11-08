@@ -295,3 +295,22 @@ input[type='checkbox'], input[type='radio'] { width: 22px; min-height: 0; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .list-tools { width: 100%; } .list-tools .field--inline { flex: 1 1 100%; } .field--inline input, .field--inline select { width: 100%; }
 }
+
+/* wishlist heart, sizes, account menu, sign-in */
+.heart { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 22px; border: 1px solid var(--grout); background: #fff; color: var(--ink); cursor: pointer; padding: 0; }
+.heart.is-on { color: var(--danger); border-color: var(--danger); }
+.heart--card { position: absolute; top: 8px; inset-inline-end: 8px; z-index: 2; }
+.buy-row { display: flex; align-items: center; gap: 12px; }
+.sizes { display: flex; flex-wrap: wrap; gap: 10px; }
+.size { min-height: 56px; padding: 6px 16px; border: 1px solid var(--field); border-radius: 10px; background: #fff; color: var(--ink); cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; font: 600 0.9375rem var(--body); }
+.size small { font-weight: 400; color: var(--slate); font-variant-numeric: tabular-nums; }
+.size[aria-pressed='true'] { border: 3px solid var(--ink); padding: 4px 14px; }
+.menu { position: relative; }
+.menu__panel { position: absolute; inset-inline-end: 0; top: 100%; z-index: 40; min-width: 220px; background: #fff; border: 1px solid var(--grout); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; box-shadow: 0 8px 24px rgba(22, 38, 58, 0.12); }
+.menu__panel a, .menu__panel button { min-height: 44px; display: flex; align-items: center; padding-inline: 12px; border-radius: 8px; color: var(--ink); background: none; border: 0; font: 500 1rem var(--body); text-decoration: none; cursor: pointer; text-align: start; }
+.menu__panel a:hover, .menu__panel button:hover { background: var(--glaze); }
+.menu__hello { margin: 4px 12px 8px; color: var(--slate); font-size: 0.875rem; }
+.icon-btn--text { gap: 6px; padding-inline: 8px; }
+.narrow { max-width: 34rem; }
+.form-stack { display: grid; gap: 16px; }
+@media (max-width: 600px) { .hide-sm { display: none; } }

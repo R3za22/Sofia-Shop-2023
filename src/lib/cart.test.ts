@@ -33,6 +33,15 @@ describe('cart', () => {
     expect(setLineQty(base, 'p1', 'oat', 7, 5)[0].qty).toBe(5);
   });
 
+  it('treats sizes as separate lines', () => {
+    let l = addLine([], 'p1', 'oat', 1, 5, 'two');
+    l = addLine(l, 'p1', 'oat', 1, 5, 'three');
+    l = addLine(l, 'p1', 'oat', 1, 5, 'two');
+    expect(l).toEqual([{ productId: 'p1', color: 'oat', size: 'two', qty: 2 }, { productId: 'p1', color: 'oat', size: 'three', qty: 1 }]);
+    expect(setLineQty(l, 'p1', 'oat', 4, 9, 'three')[1].qty).toBe(4);
+    expect(removeLine(l, 'p1', 'oat', 'two')).toHaveLength(1);
+  });
+
   it('removes only the matching line', () => {
     const base = [
       { productId: 'p1', color: 'oat' as const, qty: 1 },

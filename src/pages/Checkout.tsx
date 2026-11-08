@@ -54,7 +54,7 @@ export function Checkout() {
 
   const theCity = city ?? cart.city;
   const theMethod = method ?? cart.method;
-  const q = quote(cart.lines.map((l) => ({ price: l.product.price, qty: l.qty })), theCity, theMethod, cart.code);
+  const q = quote(cart.lines.map((l) => ({ price: l.unit, qty: l.qty })), theCity, theMethod, cart.code);
   const pickCity = (c: City) => { setCity(c); void setDelivery({ city: c }); };
   const pickMethod = (m: DeliveryMethod) => { setMethod(m); void setDelivery({ method: m }); };
 
@@ -84,8 +84,8 @@ export function Checkout() {
       navigate(`/order/${order.id}`);
     } catch (e) {
       if (e instanceof ApiError && e.code === 'validation' && e.fields) {
-        setErrors(e.fields);
-        focusFirst(e.fields);
+        setErrors(e.fields as Errors);
+        focusFirst(e.fields as Errors);
       } else if (e instanceof ApiError && e.code === 'payment_declined') setBanner('declined');
       else setBanner('failed');
     } finally {
@@ -162,9 +162,9 @@ export function Checkout() {
           <h2 id="ord-h">{t('co.order')}</h2>
           <ul className="mini">
             {cart.lines.map((l) => (
-              <li key={`${l.product.id}-${l.color}`}>
+              <li key={`${l.product.id}-${l.color}-${l.size?.id ?? ''}`}>
                 <div className="mini__art" style={{ background: l.product.bg }}><Illustration kind={l.product.kind} c={COLOR_HEX[l.color]} d={l.product.accent} /></div>
-                <div><div className="line__name">{l.product.name[lang]}</div><span className="muted small">{t('co.qty', { n: num(l.qty) })}</span></div>
+                <div><div className="line__name">{l.product.name[lang]}</div><span className="muted small">{l.size ? `${l.size.label[lang]} · ` : ''}{t('co.qty', { n: num(l.qty) })}</span></div>
                 <span>{money(l.lineTotal)}</span>
               </li>
             ))}

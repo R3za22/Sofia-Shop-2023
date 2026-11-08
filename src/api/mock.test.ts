@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createMockApi, DECLINE_CARD } from './mock';
+import { createMockApi, DECLINE_CARD, WRONG_PASSWORD } from './mock';
 import { createStorage, type Backend } from './storage';
 import { ApiError, type ShopApi } from './types';
 import type { CheckoutInput } from '../types';
@@ -84,5 +84,47 @@ describe('mock api', () => {
     await a.addToCart('tir-lamp', 'indigo', 1);
     expect((await a.getCart()).count).toBe(1);
     expect(s.blocked).toBe(true);
+  });
+
+  it('prices sofas per size and keeps sizes as separate lines', async () => {
+    const p = await api.getProduct('alma-sofa');
+    expect(p.sizes?.map((s) => s.id)).toEqual(['three', 'two', 'four']);
+    await api.addToCart('alma-sofa', 'indigo', 1, 'two');
+    const cart = await api.addToCart('alma-sofa', 'indigo', 1);
+    expect(cart.lines).toHaveLength(2);
+    const two = cart.lines.find((l) => l.size?.id === 'two')!;
+    expect(two.unit).toBe(p.sizes![1].price);
+    expect(cart.quote.subtotal).toBe(p.sizes![1].price + p.price);
+    await expect(api.addToCart('alma-sofa', 'indigo', 1, 'huge')).rejects.toMatchObject({ code: 'validation' });
+    const order = await api.checkout(form());
+    expect(order.lines.find((l) => l.size?.en === '2-seat')?.unit).toBe(p.sizes![1].price);
+  });
+
+  it('persists a wishlist and lists its products', async () => {
+    expect(await api.getWishlist()).toEqual([]);
+    expect(await api.toggleWishlist('kaveh-vase')).toEqual(['kaveh-vase']);
+    expect(await api.toggleWishlist('tir-lamp')).toEqual(['kaveh-vase', 'tir-lamp']);
+    expect((await make().listWishlist()).map((x) => x.id).sort()).toEqual(['kaveh-vase', 'tir-lamp']);
+    expect(await api.toggleWishlist('kaveh-vase')).toEqual(['tir-lamp']);
+    await expect(api.toggleWishlist('nope')).rejects.toMatchObject({ code: 'not_found' });
+  });
+
+  it('signs in and out, gating orders and account', async () => {
+    expect((await api.getAccount()).name.fa).toBe('سارا کریمی');
+    await api.signOut();
+    await expect(api.getAccount()).rejects.toMatchObject({ code: 'unauthorized' });
+    await expect(api.listOrders()).rejects.toMatchObject({ code: 'unauthorized' });
+    await expect(api.signIn('bad', '123')).rejects.toMatchObject({ code: 'validation', fields: { email: 'email', password: 'password' } });
+    await expect(api.signIn('a@b.co', WRONG_PASSWORD)).rejects.toMatchObject({ code: 'unauthorized' });
+    expect((await api.signIn('me@example.com', 'secret1')).email).toBe('me@example.com');
+    expect(await api.listOrders()).toHaveLength(2);
+    expect((await make().getAccount()).email).toBe('me@example.com');
+  });
+
+  it('accepts a valid contact message and rejects an invalid one', async () => {
+    await expect(api.sendContact({ name: '', contact: 'x', message: 'hi' })).rejects.toMatchObject({ code: 'validation' });
+    const r = await api.sendContact({ name: 'Sara', contact: 'sara@example.com', message: 'Do you deliver to Shiraz?' });
+    expect(r.id).toBe('MSG-1001');
+    expect((await api.sendContact({ name: 'Sara', contact: '09121234567', message: 'Another question here' })).id).toBe('MSG-1002');
   });
 });

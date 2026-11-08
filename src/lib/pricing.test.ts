@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deliveryFee, discountFor, quote } from './pricing';
+import { deliveryFee, discountFor, quote, unitPrice } from './pricing';
 
 const items = [
   { price: 38_900_000, qty: 1 },
@@ -7,6 +7,13 @@ const items = [
 ];
 
 describe('pricing', () => {
+  it('prices per size and falls back to the base price', () => {
+    const p = { price: 100, sizes: [{ id: 'a', price: 100 }, { id: 'b', price: 150 }] };
+    expect(unitPrice(p, 'b')).toBe(150);
+    expect(unitPrice(p, 'zzz')).toBe(100);
+    expect(unitPrice({ price: 70 })).toBe(70);
+  });
+
   it('sums the subtotal and totals with free delivery in Ahvaz', () => {
     const q = quote(items, 'ahvaz', 'home');
     expect(q).toEqual({ subtotal: 40_680_000, discount: 0, delivery: 0, total: 40_680_000 });

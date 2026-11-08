@@ -43,6 +43,24 @@ export function validExpiry(value: string, now: Date = new Date()): boolean {
   return year > now.getFullYear() || (year === now.getFullYear() && month >= now.getMonth() + 1);
 }
 
+export type ContactErrors = Partial<Record<'name' | 'contact' | 'message', 'required' | 'contact' | 'message'>>;
+
+/** Contact form: name, an email or an Iranian mobile number, and a message of at least 10 characters. */
+export function validateContact(input: { name: string; contact: string; message: string }): ContactErrors {
+  const e: ContactErrors = {};
+  if (input.name.trim().length < 2) e.name = 'required';
+  const c = input.contact.trim();
+  if (!c) e.contact = 'required';
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(c) && !validPhone(c)) e.contact = 'contact';
+  if (!input.message.trim()) e.message = 'required';
+  else if (input.message.trim().length < 10) e.message = 'message';
+  return e;
+}
+
+export function validEmail(s: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s.trim());
+}
+
 export function validateCheckout(input: CheckoutInput, now: Date = new Date()): Errors {
   const e: Errors = {};
   if (input.name.trim().length < 2) e.name = 'required';

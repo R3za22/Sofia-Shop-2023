@@ -14,7 +14,7 @@ function payButton(page: Page) {
 
 async function addAlmaToCart(page: Page) {
   await page.goto(ALMA_URL);
-  await expect(page.getByRole('heading', { level: 1, name: 'Alma 3-seat sofa' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Alma sofa' })).toBeVisible();
   await page.getByRole('button', { name: 'Add to cart', exact: true }).click();
   await expect(page.getByText('Added to cart.')).toBeVisible();
 }
@@ -55,7 +55,7 @@ test('browse, filter, sort, paginate', async ({ page }) => {
 
   // Sorting
   await page.getByLabel('Sort by').selectOption({ label: 'Price, high to low' });
-  await expect(cards.first()).toContainText('Alma 3-seat sofa');
+  await expect(cards.first()).toContainText('Alma sofa');
 
   // Empty state
   await page.getByPlaceholder('Search products').fill('zzz');

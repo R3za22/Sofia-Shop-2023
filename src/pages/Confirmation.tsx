@@ -32,9 +32,9 @@ export function Confirmation() {
         <div className="panel">
           <ul className="mini">
             {o.lines.map((l) => (
-              <li key={l.productId + l.color}>
+              <li key={l.productId + l.color + (l.size?.en ?? '')}>
                 <div className="mini__art" style={{ background: l.bg }}><Illustration kind={l.kind} c={COLOR_HEX[l.color]} d={l.accent} /></div>
-                <div><div className="line__name">{l.name[lang]}</div><span className="muted small">{t('co.qty', { n: num(l.qty) })}</span></div>
+                <div><div className="line__name">{l.name[lang]}</div><span className="muted small">{l.size ? `${l.size[lang]} · ` : ''}{t('co.qty', { n: num(l.qty) })}</span></div>
                 <span>{money(l.unit * l.qty)}</span>
               </li>
             ))}

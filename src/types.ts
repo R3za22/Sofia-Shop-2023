@@ -9,6 +9,7 @@ export type Kind = 'sofa' | 'lamp' | 'vase' | 'table' | 'rug' | 'shelf';
 export type ColorId = 'indigo' | 'sage' | 'oat' | 'saffron' | 'charcoal' | 'white';
 export type City = 'ahvaz' | 'shiraz' | 'tehran';
 export type DeliveryMethod = 'home' | 'pickup';
+export interface ProductSize { id: string; label: L10n; /** Whole Toman, replaces the base price. */ price: number }
 export type SortKey = 'newest' | 'price-asc' | 'price-desc';
 
 /** Prices are whole Toman. */
@@ -18,7 +19,9 @@ export interface Product {
   room: Room;
   type: ProductType;
   kind: Kind;
+  /** Price of the default size (the first entry of `sizes` when present). */
   price: number;
+  sizes?: ProductSize[];
   colors: ColorId[];
   stock: number;
   isNew: boolean;
@@ -53,7 +56,7 @@ export interface ProductPage {
   priceRange: { min: number; max: number };
 }
 
-export interface CartLine { productId: string; color: ColorId; qty: number }
+export interface CartLine { productId: string; color: ColorId; size?: string; qty: number }
 
 export interface Quote {
   subtotal: number;
@@ -67,7 +70,9 @@ export interface Quote {
 export interface CartLineView {
   product: Product;
   color: ColorId;
+  size?: ProductSize;
   qty: number;
+  unit: number;
   lineTotal: number;
 }
 
@@ -97,6 +102,7 @@ export interface OrderLine {
   name: L10n;
   kind: Kind;
   color: ColorId;
+  size?: L10n;
   bg: string;
   accent: string;
   qty: number;
@@ -114,4 +120,7 @@ export interface Order {
   payment: { method: 'simulated'; last4: string };
 }
 
-export interface Account { name: string; email: string; phone: string }
+export interface Account { name: L10n; email: string; phone: string }
+
+export interface ContactInput { name: string; contact: string; message: string }
+export interface ContactReceipt { id: string; createdAt: number }

@@ -45,3 +45,8 @@ export function quote(
   if (error) result.codeError = error;
   return result;
 }
+
+/** Unit price for a product at a size (falls back to the base price). */
+export function unitPrice(product: { price: number; sizes?: { id: string; price: number }[] }, size?: string): number {
+  return product.sizes?.find((s) => s.id === size)?.price ?? product.price;
+}

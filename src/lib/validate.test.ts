@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { luhn, validateCheckout, validExpiry } from './validate';
+import { luhn, validateCheckout, validateContact, validExpiry } from './validate';
 import type { CheckoutInput } from '../types';
 
 const now = new Date('2026-11-08T00:00:00Z');
@@ -42,5 +42,16 @@ describe('validation', () => {
     expect(validExpiry('11/26', now)).toBe(true);
     expect(validExpiry('10/26', now)).toBe(false);
     expect(validExpiry('13/30', now)).toBe(false);
+  });
+});
+
+describe('contact validation', () => {
+  it('accepts an email or a mobile number', () => {
+    expect(validateContact({ name: 'Sara', contact: 'sara@example.com', message: 'Is the Alma sofa in stock?' })).toEqual({});
+    expect(validateContact({ name: 'Sara', contact: '۰۹۱۲۱۲۳۴۵۶۷', message: 'Is the Alma sofa in stock?' })).toEqual({});
+  });
+  it('flags missing and malformed fields', () => {
+    expect(validateContact({ name: '', contact: '', message: '' })).toEqual({ name: 'required', contact: 'required', message: 'required' });
+    expect(validateContact({ name: 'Sara', contact: 'nope', message: 'short' })).toEqual({ contact: 'contact', message: 'message' });
   });
 });
