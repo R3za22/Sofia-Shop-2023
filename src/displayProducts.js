@@ -10,7 +10,7 @@ const display = (products, element, filters) => {
             <img src="${image}" class="product-img img" alt="${name}" />
            
             <div class="product-icons">
-              <a href="product.html?id=${id}" class="product-icon">
+              <a href="product.html?id=${id}" class="product-icon" aria-label="مشاهده ${name}">
                 <i class="fas fa-search"></i>
               </a>
               <!-- <button class="product-cart-btn product-icon" data-id="${id}">
@@ -20,7 +20,7 @@ const display = (products, element, filters) => {
           </div>
           <footer>
             <p class="product-name">${name}</p>
-            <h4 class="product-price">${price/1000},000 تومان</h4>
+            <p class="product-price">${price/1000},000 تومان</p>
           </footer>
         </article> `;
     })
