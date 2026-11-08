@@ -18,7 +18,7 @@ const data = [
           "image": [
               {
                 "id": "1",
-                "url": "./images/ta/1.jpg", 
+                "url": "./images/ta/1.svg", 
               }
           ],
           "description": `   🌸شمع پاکسازی گوش
@@ -48,7 +48,7 @@ const data = [
         "image": [
             {
                 "id": "2",
-                "url": "./images/ta/2.jpg",
+                "url": "./images/ta/2.svg",
 
             }
         ],
@@ -80,7 +80,7 @@ const data = [
       "image": [
           {
             "id": "3",
-            "url": "./images/ta/3.jpg"
+            "url": "./images/ta/3.svg"
 
           }
       ],
@@ -115,7 +115,7 @@ const data = [
       "image": [
           {
             "id": "4",
-            "url": "./images/ta/4.jpg"
+            "url": "./images/ta/4.svg"
           }
       ],
       "description": `  🌸ازبین برنده پوست های زائد و مرده کف پا
@@ -142,7 +142,7 @@ const data = [
       "image": [
           {
             "id": "5",
-            "url": "./images/ta/5.jpg",
+            "url": "./images/ta/5.svg",
           }
       ],
       "description": `   🌸ضد جوش و اکنه
@@ -173,7 +173,7 @@ const data = [
       "image": [
           {
             "id": "6",
-            "url": "./images/ta/6.jpg",
+            "url": "./images/ta/6.svg",
           }
       ],
       "description": ` 

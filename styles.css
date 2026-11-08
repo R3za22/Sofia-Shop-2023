@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap');
+@font-face{font-family:'Kaushan Script';font-style:normal;font-weight:400;font-display:swap;src:url(./vendor/fonts/kaushan-script-latin-400-normal.woff2) format('woff2')}
 
 /* این فایل وظیفه تعریف و بارگذاری فونت های «فونت ایران» را برعهده دارد */
 /* پیشنهاد می شود از روش قبل استفاده کنید */
@@ -7,11 +7,11 @@
   font-family: IRANSans;
   font-style: normal;
   font-weight: normal;
-  src: url('../fonts/IRANSansWeb(FaNum).eot');
-  src: url('../fonts/IRANSansWeb(FaNum).eot?#iefix') format('embedded-opentype'),  /* IE6-8 */
-       url('../fonts/IRANSansWeb(FaNum).woff2') format('woff2'),  /* Chrome36+, Opera24+*/
-       url('../fonts/IRANSansWeb(FaNum).woff') format('woff'),  /* FF3.6+, IE9, Chrome6+, Saf5.1+*/
-       url('../fonts/IRANSansWeb(FaNum).ttf') format('truetype');
+  src: url('./fonts/IRANSansWeb(FaNum).eot');
+  src: url('./fonts/IRANSansWeb(FaNum).eot?#iefix') format('embedded-opentype'),  /* IE6-8 */
+       url('./fonts/IRANSansWeb(FaNum).woff2') format('woff2'),  /* Chrome36+, Opera24+*/
+       url('./fonts/IRANSansWeb(FaNum).woff') format('woff'),  /* FF3.6+, IE9, Chrome6+, Saf5.1+*/
+       url('./fonts/IRANSansWeb(FaNum).ttf') format('truetype');
 }
 
 /*
@@ -329,7 +329,7 @@ Hero
   min-height: 100vh;
   margin-top: -6rem;
   background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
-    url(./images/main-bcg.jpeg) center/cover ;
+    url(./images/main-bcg.svg) center/cover ;
   display: grid;
   place-items: center;
   color: var(--clr-white);
